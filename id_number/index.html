@@ -1,0 +1,129 @@
+<!-- DOCTYPE html-->
+<html>
+	<head>
+
+
+	</head>
+	<body>
+        <table>
+            <tr>
+                <td> Beh&ouml;rdenkennzahl: </td>
+                <td> <input id="agency" type="text" maxLength="4" placeHolder="XXXX"/>(erste vier Zahlen)<br/> </td>
+            </tr>
+            <tr>
+		        <td>Fortlaufende Nummer:</td>
+                <td><input id="consecutive" type="text" maxLength="5" placeHolder="XXXXX"/>(n&auml;chste f&uuml;nf Zahlen)<td/>
+            </tr>
+            <tr>
+		        <td>Geburtsdatum:</td>
+                <td><input id="birth" type="text" maxLength="10" placeHolder="DD.MM.YYYY"/><td/>
+            </tr>
+            <tr>
+		        <td>Ablaufdatum:</td>
+                <td><input id="expiration" type="text" maxLength="10" placeHolder="DD.MM.YYYY"/></td>
+            </tr>
+            <tr>
+		        <td><input type="button" value="Ausweisnummer anzeigen..." onclick="generateIDNumber();"/></td>
+            </tr>
+            <tr>
+		        <td>Alter Personalausweis:</td>
+                <td><div id="oldPassport"></div></td>
+            </tr>
+            <tr>
+		        <td>Neuer Personalausweis:</td>
+                <td><div id="newPassport"></div></td>
+            </tr>
+		    <script type="text/javascript">
+			function generateIDNumber(){
+				var agencyNumberTextField= document.getElementById('agency');
+				var consecutiveNumberTextField= document.getElementById('consecutive');
+				var birthDateTextField = document.getElementById('birth');
+				var expirationDateTextField = document.getElementById('expiration');
+				var oldPassportNumberField = document.getElementById('oldPassport');
+				var newPassportNumberField = document.getElementById('newPassport');
+
+
+				var agencyNumber = parseInt(agencyNumberTextField.value,10);
+				if(isNaN(agencyNumber)) agencyNumber=randomNumber(1,10000);
+
+				var consecutiveNumber = parseInt(consecutiveNumberTextField.value,10);
+				if(isNaN(consecutiveNumber)) consecutiveNumber=randomNumber(1,100000);
+
+				var birthDate = parseDate(birthDateTextField.value)||[1,1,1970];
+				var expirationDate = parseDate(expirationDateTextField.value)||[1,1,2018];
+
+				agencyNumberTextField.value=exactLengthIntString(agencyNumber,4);
+				consecutiveNumberTextField.value=exactLengthIntString(consecutiveNumber,5);
+				birthDateTextField.value=birthDate[0]+'.'+birthDate[1]+'.'+birthDate[2];
+				expirationDateTextField.value=expirationDate[0]+'.'+expirationDate[1]+'.'+expirationDate[2];
+
+				var idParts=[exactLengthIntString(agencyNumber,4)
+								+exactLengthIntString(consecutiveNumber,5),
+								 validDateString(birthDate),
+								 validDateString(expirationDate)
+							];
+				var checkParts=[checknum(idParts[0]),checknum(idParts[1]),checknum(idParts[2]),checknum(idParts[0]+idParts[1]+idParts[2])];
+				oldPassportNumberField.innerHTML=idParts[0]+checkParts[0]+'D<<'
+									+idParts[1]+checkParts[1]+'<'
+									+idParts[2]+checkParts[2]+'<<<<<<<'
+									+checkParts[3];
+				newPassportNumberField.innerHTML='IDD<<'+idParts[0]+checkParts[0]+'<<<<<<<<<<<<<<<'
+											+'<br/>'
+											+idParts[1]+checkParts[1]+'<'
+											+idParts[2]+checkParts[2]+'D<<<<<<<<<<<<<'
+											+checkParts[3];
+			}
+
+			function exactLengthIntString(integer, len){
+				var str = integer.toString();
+				if (str.length>len) {
+					str=str.substr(str.length-len,len);
+				}
+				while(str.length<len) {
+					str='0'+str;
+				}
+				return str;
+			}
+
+			function randomNumber(from, to){
+				return Math.floor(Math.random()*(to-from)+from);
+			}
+
+			function parseDate(str){
+				var regex = /(\d+).(\d+).(\d+)/
+				var parts = str.match(regex);
+				if (!parts) {return null};
+				return [
+					parseInt(parts[1],10),
+					parseInt(parts[2],10),
+					parseInt(parts[3],10)
+				];
+
+			}
+
+			function validDateString(dateParts){
+				if (!dateParts) {
+					return null;
+				};
+				return exactLengthIntString(dateParts[2]%100,2)
+						+exactLengthIntString(dateParts[1]%100,2)
+						+exactLengthIntString(dateParts[0]%100,2);
+			}
+
+			function clamp(val, bottom, top){
+				return Math.max(bottom, Math.min(val, top))
+			}
+
+			function checknum(str){
+				var mul = [7,3,1];
+				var res = 0;
+				for (var i = 0; i < str.length; i++) {
+					var n = (str.charCodeAt(i)-48);
+					res += (n*mul[i%3])%10;
+				};
+				return res % 10;
+			}
+
+		</script>
+	</body>
+</html>

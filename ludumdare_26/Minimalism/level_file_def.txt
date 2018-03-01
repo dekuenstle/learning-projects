@@ -1,0 +1,18 @@
+level: format 4:3  (e.g. 20x15)
+named "level_x.png" e.g. "level_1.png"
+change in main.lua: max_level = x     e.g. max_level = 5
+
+when finished: zip all and rename to .love  .  Then play with Löve https://love2d.org
+
+
+r g b - meaning
+
+0 0 0 - wall
+255 255 255 - floor
+128 128 128 - wall which doesn't become a floor
+
+
+
+0 128 0 - player
+0 255 0 - goal
+255 255 0 - wall switch

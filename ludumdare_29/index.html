@@ -1,0 +1,328 @@
+<html>
+<head>
+	<style type="text/css">
+	body {
+		margin:0;
+	}
+	#center {
+	    width: 700px;
+	    margin: 0 auto;
+	    background-color: #CCCCCC;
+		
+		padding:50 0;
+		text-align:center;
+		font-family:Helvetica;
+	}
+	canvas{
+		margin: 0 auto;
+		display:block;
+		border-width:1px;
+		border-style:solid;
+	}
+	</style>
+</head>
+<body>
+	<div id="center">
+		<canvas id="myCanvas" width="480" height="480">Use a modern Browser with HTML5 Canvas support, please!</canvas>
+		 <br/>
+		Controls: Arrow keys   left <-  	  -> right <br/>  <br/>  <br/>  <br/>
+		Game for <a href="http://www.ludumdare.com/compo/">LudumDare 29</a>   <br/> 
+		by <a href="https://twitter.com/lasergans">@lasergans</a>   
+	</div>
+	
+	<script type="text/javascript" src="level.js"></script>
+	
+	<script type="text/javascript">
+
+	
+
+	function setupLevel(lvlNum) {
+		player.pos.y = 0;
+		player.life=1;
+		if (lvlNum>=LEVEL.length-1)
+			gameState = STATE.WON;
+		tiles = LEVEL[lvlNum];
+		currentLevel = lvlNum;
+		return true
+	}
+	
+	function drawTile(ctx, img, x, y, tile, tilesize, tilesPerRow) {
+		var tsize = tilesize||10;
+		var tPerRow = tilesPerRow||Math.floor(img.width/tsize);
+		var offX = tsize*(tile%tPerRow);
+		var offY = tsize*Math.floor(tile/tPerRow);
+		ctx.drawImage(img, offX, offY, tsize, tsize, x, y, tsize, tsize);
+	}
+	
+	function getTileAt(tiles, x, y) {
+		return tiles[Math.floor(y/tileSize)*16+Math.floor(x/tileSize)];
+	}
+	
+	function isSolidTile( tileId ) {
+		return tileId>=32;
+	}
+	function isDangerousTile( tileId ) {
+		return tileId>=16 && tileId<32;
+	}
+	
+
+	/**************************************/
+	
+	window.requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame ||
+	                              window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
+								  
+	var canvas = document.getElementById("myCanvas");
+	var ctx = canvas.getContext("2d");
+	
+	ctx.scale(3,3);
+	var oldtimestamp = 0;
+	
+	var DEATHCASE = {
+		TIMEOUT:1,
+		SPIKES:2
+	}
+	var tileImg = new Image();
+	tileImg.src = 'tiles.png';
+	tileImg.onload = function() {
+		window.requestAnimationFrame(step);
+	}
+
+	var STATE = {
+		INTRO : 1,
+		GAME : 2,
+		OVER : 3,
+		WON: 4,
+		PAUSE:5
+	}
+	
+
+	var gameState = STATE.INTRO;
+	var tileSize = 10;
+	var maxFallVel = 160;
+	var maxMoveVel =110;
+	var currentLevel = 0;
+	
+	var gravity = 150;
+	var colOff = 2;
+	ctx.fillStyle="#FFFFFF";
+	ctx.font="italic small-caps bold 12px arial";
+	
+	var Player = function() {
+		this.pos={x:75, y:20},
+		this.vel={x:0, y:0},
+		this.life=3,
+		this.deathCase=DEATHCASE.TIMEOUT
+	}
+	
+	
+	var tiles;
+	var player = new Player();
+	setupLevel(0);
+	player.life=3;
+
+	/**************************************/
+	
+	
+	function step(timestamp) {
+		var deltatime = oldtimestamp?(timestamp-oldtimestamp)/1000:0;
+		oldtimestamp = timestamp;
+		window.requestAnimationFrame(step);
+		var dt = 16/1000;
+		while ( deltatime>=dt ) {
+			deltatime-=dt;
+	
+			if (gameState == STATE.GAME || gameState == STATE.WON) {
+				player.vel.y = Math.min(maxFallVel,gravity*dt+player.vel.y);
+				player.pos.x += player.vel.x*dt;
+				player.pos.y += player.vel.y*dt;
+		
+			
+				if( player.pos.x<0 ) {
+					player.pos.x = 0;
+				}
+				if( player.pos.x+tileSize>160 ) {
+					player.pos.x = 160-tileSize;
+				}
+			
+				var tile = getTileAt(tiles, player.pos.x+colOff,player.pos.y+tileSize/2 )
+				if (isDangerousTile(tile)) {player.life=-1; player.deathCase=DEATHCASE.SPIKES}
+				if ( isSolidTile( tile ) ){ // links
+					player.pos.x=Math.floor((player.pos.x+colOff)/tileSize+1)*tileSize;
+					player.vel.x= 0;
+				
+				}
+				tile = getTileAt(tiles, player.pos.x+tileSize-colOff,player.pos.y+tileSize/2 )
+				if (isDangerousTile(tile)) {player.life=-1; player.deathCase=DEATHCASE.SPIKES}
+				if ( isSolidTile( tile ) ){ // rechts
+					player.pos.x=Math.floor((player.pos.x+tileSize-colOff)/tileSize-1)*tileSize;
+					player.vel.x= 0;
+				}
+				tile = getTileAt(tiles, player.pos.x+tileSize/2,player.pos.y+colOff );
+				if (isDangerousTile(tile)) {player.life=-1; player.deathCase=DEATHCASE.SPIKES}
+				if ( isSolidTile( tile ) ){ // oben
+					player.pos.y=Math.floor((player.pos.y+colOff)/tileSize+1)*tileSize;
+					player.vel.y= 0;
+				}
+				tile = getTileAt(tiles, player.pos.x+tileSize/2,player.pos.y+tileSize-colOff );
+				if (isDangerousTile(tile)) {player.life=-1; player.deathCase=DEATHCASE.SPIKES}
+				if ( isSolidTile( tile ) ){ // unten
+					
+					
+					player.pos.y=Math.floor((player.pos.y+tileSize-colOff)/tileSize-1)*tileSize;
+					player.vel.y= 0;
+				}
+			
+				
+				if ( player.life<=0 ) {
+					gameState = STATE.OVER;
+				} else if (gameState == STATE.GAME) {
+					player.life -= (1/8)*dt;
+					
+				}
+				
+				if ( player.pos.y>160 && gameState != STATE.WON ) {
+					setupLevel(currentLevel+1);
+				}
+			}
+
+			// TODO: Levels
+			// TODO: GFX
+			
+			/**********/
+			// If theres time left....:
+			// TODO: Make Intro
+			// TODO: Make Music
+			// TODO: Fix collision detection (Circle Tile, mit Collision Points)
+			
+			// TODO: Make MOOOOORE Levels!
+			
+		
+		}
+		oldtimestamp-=deltatime;
+
+		
+		ctx.fillRect(0,0,160,160);
+	
+		for( var x=0; x<16; x++){
+			for( var y=0; y<16; y++){
+				if (tiles[16*y+x]>=0) {
+					drawTile(ctx, tileImg, x*tileSize, y*tileSize, tiles[16*y+x]);
+				}	
+			}
+		}
+		ctx.scale(player.life,player.life);
+		drawTile(ctx, tileImg, Math.floor(player.pos.x*1/player.life), Math.floor(player.pos.y*1/player.life), 0);
+		ctx.scale(1/player.life,1/player.life);
+		
+		if (gameState === STATE.INTRO) {
+			ctx.fillStyle="#FFFFFF";
+			ctx.fillText("Day after day, the sun ",5,30);
+			ctx.fillText("watches the same surface...",10,40);
+			ctx.fillText("so it's time for a change...",25,60);
+			
+			ctx.fillStyle="#CC3333";
+			ctx.fillText("go beyond it!",15,75);
+			
+			ctx.fillStyle="#888888";
+			ctx.fillText("START [Y]/[Z]",60,110);
+			ctx.fillText("Arrow keys to navigate",30,120);
+			
+			
+			
+		} else if (gameState === STATE.GAME) {
+			
+		} else if (gameState === STATE.OVER) {
+			ctx.fillStyle="#FFFFFF";
+			ctx.fillText("You were too "+(player.deathCase==DEATHCASE.TIMEOUT?"slow":"risky"),5,30);
+			ctx.fillText("sun "+(player.deathCase==DEATHCASE.TIMEOUT?"bored":"got poked")+" to death",10,40);
+			
+			ctx.fillStyle="#CC3333";
+			ctx.fillText("TRY AGAIN",15,75);
+			
+			ctx.fillStyle="#888888";
+			ctx.fillText("[Y]/[Z] START",60,110);
+			ctx.fillText("Arrow keys to navigate",30,120);
+		} else if (gameState === STATE.WON) {
+			ctx.fillStyle="#FFFFFF";
+			ctx.fillText("Thanks!",25,30);
+			ctx.fillText("Sun had it's most fantastic day",0,40);
+			ctx.fillStyle="#CC3333";
+			ctx.fillText("EVER, EVER, EVER!",30,60);
+			ctx.fillStyle="#888888";
+			
+			ctx.fillText("TRY AGAIN [Y]/[Z]",50,90);
+				
+		} else if (gameState===STATE.PAUSE) {
+			ctx.fillStyle="#FFFFFF";
+			ctx.fillText("PAUSE",10,10);
+		}
+		
+	}
+	
+	
+	window.addEventListener( "keydown", function(e){
+		if (gameState === STATE.INTRO) {
+			
+		}
+		 if (gameState === STATE.GAME || gameState === STATE.WON ) {
+	
+			if (e.keyCode === 37) { // left arrow
+				player.vel.x = -maxMoveVel;
+			}
+			if (e.keyCode === 39) { // right arrow
+				player.vel.x = maxMoveVel;
+			}
+		}
+	
+		
+		 if (gameState === STATE.OVER) {
+			
+		}
+
+	},true);
+	window.addEventListener( "keyup", function(e){
+		if (gameState === STATE.INTRO) {
+			if (e.keyCode === 89 || e.keyCode === 90) { // y or z
+				gameState = STATE.GAME;
+				player.life = 1;
+				
+			}
+		}
+		 if (gameState === STATE.GAME || gameState === STATE.WON) {
+			if (e.keyCode === 37) { // left arrow
+				player.vel.x = 0;
+			}
+			if (e.keyCode === 39) { // right arrow
+				player.vel.x = 0;
+			}
+		} 
+		if (gameState === STATE.PAUSE ) {
+			if (e.keyCode === 80) { // p
+				gameState=STATE.GAME;
+				
+			}
+		} else if (gameState === STATE.GAME && gameState !== STATE.WON ) {
+
+			if (e.keyCode === 80) { // p
+				gameState=STATE.PAUSE;
+			}
+	
+		}
+	
+		 if (gameState === STATE.OVER
+			 || gameState === STATE.WON ) {
+			if (e.keyCode === 89 || e.keyCode === 90) { // y or z
+				gameState = STATE.INTRO;
+				currentLevel = 0;
+				setupLevel( 0);
+	 			player = new Player();
+				player.life = 3;
+			}
+		}
+
+	}, true);
+	
+	
+	</script>
+</body>
+</html>

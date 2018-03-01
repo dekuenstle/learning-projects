@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+	<title>Animation Test</title>
+	<script type="text/javascript" src='main.js'></script>
+	<style type="text/css">
+		#test,#test2 {
+			margin: auto;
+			width: 320px;
+			height: 320px;
+			background-color:red;
+		}
+	</style>
+</head>
+<body>
+	<div id="test">
+	</div>
+	<div id="test2">
+	</div>
+	<script type="text/javascript">
+
+		ANIM.keyframes('grow',
+			[ 0,{
+					"width":[0, "%"],
+					"height":[0, "px"]
+				},
+			  1,{
+			  		"width":[100, "%"],
+			  		"height":[300, "px"]
+			  	}]);
+		ANIM.keyframes('wabble',
+			[
+				0, {"width":[100,"%"],"height":[100,"px"]},
+				0.25, {"width":[95,"%"],"height":[150,"px"]},
+				0.5, {"width":[100,"%"],"height":[100,"px"]},
+				0.75, {"width":[95,"%"],"height":[150,"px"]},
+				1, {"width":[100,"%"],"height":[100,"px"]}
+			]);
+		var elem = document.getElementById("test");
+		var elem2 = document.getElementById("test2");
+
+		ANIM.animation(elem,'grow',4,ANIM.quadraticInOut,2);
+		ANIM.animation(elem2,'wabble',6);
+	</script>
+</body>
+</html>

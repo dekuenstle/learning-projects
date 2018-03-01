@@ -1,0 +1,105 @@
+<html>
+    <head>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js" charset="utf-8"></script>
+    </head>
+    <body>
+        <script>
+         (function(){
+             d3.radar = function(elem){
+                 var width  = 1,
+                     height = 1,
+                     margin = 50 
+                 function radar(g){
+                     g.each(function(d,i){
+                         var g = d3.select(this)
+                                   .attr("transform","translate("+width/2+","+(height-margin/2)+")")
+                         
+                         var distanceDomain = [d3.min(d.distances), d3.max(d.distances)]
+                         var distanceScale = d3.scale.linear()
+                                               .domain(distanceDomain)
+                                               .range([margin,height-margin])
+                         
+                         var distanceCircles = g.selectAll("circle.radar")
+                                                .data(d.distances)
+                         
+                         distanceCircles.enter()
+                                        .append("circle")
+                                        .attr("r",function(d){ return distanceScale(d) })
+                                        .attr("fill",function(dd,i){
+                                            var outerGrey = 180
+                                            var innerGrey = 120
+                                            var deltaGrey = (outerGrey - innerGrey)/(d.distances.length-2)
+                                            var curGrey = (outerGrey - i*deltaGrey).toString(16)
+                                            return "#"+curGrey+curGrey+curGrey
+                                        })
+                                        .attr("class","radar")
+                         
+                         distanceCircles.exit().remove()
+
+                         g.append("circle")
+                          .attr("r",margin)
+                          .attr("fill","white")
+                         g.append("rect")
+                          .attr("x",-width/2)
+                          .attr("y",0)
+                          .attr("width",width)
+                          .attr("height",margin/2)
+                          .attr("fill","white")
+                         var distanceTextsRight = g.selectAll("text")
+                                                   .data(d.distances)
+                                                   .enter()
+                                                   .append("text")
+                                                   .attr("text-anchor","middle")
+                                                   .attr("x",function(d){ return distanceScale(d) }) 
+                                                   .attr("y",margin/2-10)
+                                                   .text(function(d) {return d})
+                         var distanceTextsLeft = g.selectAll("text.distanceDescriptionLeft")
+                                                  .data(d.distances)
+                                                  .enter()
+                                                  .append("text")
+                                                  .attr("text-anchor","middle")
+                                                  .attr("x",function(d){ return -distanceScale(d) }) 
+                                                  .attr("y",margin/2-10)
+                                                  .text(function(d) {return d})
+
+
+                         var sectionSeparators = g.selectAll("line")
+                         
+                         
+                     })        
+                 }
+                 radar.width = function(w){
+                     if(!arguments.length) return width
+                     width = w
+                     return radar
+                 }
+                 radar.height = function(h){
+                     if(!arguments.length) return height
+                     height = h
+                     return radar
+                 }
+                 return radar
+             }
+         })()
+         var width = 600,
+             height = 320,
+             dat = [{
+                 distances:[4,3,2,1]
+             }]
+         var radar = d3.radar()
+                       .width(width)
+                       .height(height)
+
+         var vis = d3.select("body")
+                     .append("svg")
+                     .attr("width", width)
+                     .attr("height",height)
+
+         var g = vis.selectAll("g")
+                    .data(dat)
+         g.enter().append("g")
+         g.exit().remove()
+         g.call(radar)
+        </script>
+    </body>
+</html>

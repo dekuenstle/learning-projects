@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html> 
+	<head>
+		<script type="text/javascript" charset="utf-8"> 
+		function brainfuck( str ) {
+			var pos = 0;
+			var scan_pos = 0;
+			var buffer = [0];
+			var result = "";
+			var loop_start_stack = [];
+			var SCAN_POS = 0,
+				POS = 1,
+				VAL = 2;
+			var loop_count = 0; 
+
+			function interpret_char( c ) {
+				if( c==='+' ){
+					buffer[pos]++;
+				} else if( c==='-' ){
+					//if (buffer[pos]>0)
+						buffer[pos]--;
+				} else if( c==='<' ){
+					if (pos>0) {
+						pos--;
+					}
+	
+				} else if( c==='>' ){
+					pos++;
+					if (buffer.length<=pos) {
+						buffer.push(0);
+					}
+				} else if( c==='.' ){
+					result = result+String.fromCharCode( buffer[pos] );
+				} else if( c==='[' ){
+					if ( buffer[pos]==0 ) {
+						loop_count = 0;
+						while (str.charAt(scan_pos)!==']' && scan_pos<str.length) {
+							scan_pos++;
+						}
+					} else {
+						loop_start_stack.push( [scan_pos, pos, buffer[pos]] ) ;
+					}
+				} else if( c===']' ){
+					var loop_start = loop_start_stack.pop();
+					if ( //buffer[pos]!=0 &&
+						 (loop_start[VAL] > buffer[pos])  //|| loop_start[POS]!=pos)
+						 && loop_count<1000000
+					  ) {
+						scan_pos = loop_start[SCAN_POS]-1;
+						loop_count++;
+					} else {
+						loop_count = 0;
+					}	
+				}	
+			} 
+	
+			while( scan_pos < str.length ) {
+				interpret_char( str.charAt(scan_pos) ) 
+				scan_pos++;
+			}
+			return result;
+		} 
+		</script>
+		
+
+	</head>
+	<body>
+		 <textarea id="brainIn" cols="60" rows="40"> 
+		    we use pos 0 as loop index	
+			+++++ +++++ (10 at pos0)
+			[ > +++++ +++++ < -] set pos1 to 100, pos0 to 0
+			> ---. +. +. <   write abc (97,98,99)
+			+++++ + (6 at pos0)
+			[ >> +++++ +++++ << -] set pos2 to 60, pos0 to 0
+		    >> . <  -. +++++ +++++ +++++ +.  write newline <br/>
+			> ----- ----- ---.   +++++ +++++ +++++.  
+			[-] < [-] < set pos1 to 0 and go to pos0
+		 	
+				
+		    ++++++++++
+		    [
+		     >+++++++>++++++++++>+++>+<<<<-
+		    ]                       Schleife zur Vorbereitung der Textausgabe
+		    >++.                    Ausgabe von 'H'
+		    >+.                     Ausgabe von 'e'
+		    +++++++.                'l'
+		    .                       'l'
+		    +++.                    'o'
+		    >++.                    Leerzeichen
+		    <<+++++++++++++++.      'W'
+		    >.                      'o'
+		    +++.                    'r'
+		    ------.                 'l'
+		    --------.               'd'
+		    >+.                     '!'
+		    >.                      Zeilenvorschub
+		    +++.                    Wagenrücklauf
+		 </textarea>
+		 <div id='resultOut'></div>
+		 
+ 		<script type="text/javascript" charset="utf-8"> 
+		var textField = document.getElementById('brainIn');	
+		var resultDiv = document.getElementById('resultOut');	
+		textField.onkeyup = function () {
+			var code = 	textField.value;
+	 		
+	 		resultDiv.innerHTML = brainfuck(code);
+		}
+		textField.onkeyup();
+		
+ 		</script>
+	</body>
+</head>
+
+
+

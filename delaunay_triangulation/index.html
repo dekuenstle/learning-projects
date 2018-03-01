@@ -1,0 +1,153 @@
+<html>
+<head>
+	<style type="text/css">
+	canvas {
+		height: 600px;
+		width: 800px;
+		margin-left: auto;
+		margin-right: auto;
+	}
+	</style>
+	
+</head>
+
+<body>
+	<canvas width="1600" height="1200" id="canvas"></canvas>
+	
+	<script type="text/javascript">
+	function calcIntersectionPoint( point1, direction1, point2, direction2){
+		if ( (point1.x==point2.x && point1.y==point2.y) ) { // meet at startpoint
+			return point1;
+		}
+		if ( (direction1.x==0 && direction2.x==0) // No Intersection
+				 ||  (direction1.y==0 && direction2.y==0) ) {
+				 		return;
+				}
+		if ( (direction1.x==0 && direction1.y==0) // Fehlerhafte Parameter
+		 		||  (direction2.x==0 && direction2.y==0) ) {
+		 			return;
+		 		}
+
+		var rows =  [
+		    [ direction1.x, -direction2.x, point2.x-point1.x ],
+		    [ direction1.y, -direction2.y, point2.y-point1.y ]
+        ];
+
+		if ( rows[1][1]==0 || rows[0][0]==0 ) { // Swap rows
+			var h = rows[0];
+			rows[0] = rows[1];
+			rows[1] = h;
+		}
+		if ( rows[1][0]!=0 ) { //  to eliminate in second row  
+			// normalize rows
+			rows[1][2] = rows[1][2]/rows[1][0];
+			rows[1][1] = rows[1][1]/rows[1][0];
+			rows[1][0] = 1;
+			
+			rows[0][2] = rows[0][2]/rows[0][0];
+			rows[0][1] = rows[0][1]/rows[0][0];
+			rows[0][0] = 1;
+			
+			//subtract
+			rows[1][2] = rows[1][2]-rows[0][2];
+			rows[1][1] = rows[1][1]-rows[0][1];
+			rows[1][0] = 0;
+		}
+		
+		rows[1][2] = rows[1][2]/rows[1][1];
+		
+		
+
+		return {x:point2.x+rows[1][2]*direction2.x,y:point2.y+rows[1][2]*direction2.y};
+	}
+	
+	function circumscribedCircle( p1, p2, p3 ) {
+		var m12 = { x:0.5*(p1.x+p2.x), y:0.5*(p1.y+p2.y)};
+		var m23 = { x:0.5*(p2.x+p3.x), y:0.5*(p2.y+p3.y)};
+		var v12 = { x:p2.x-p1.x, y:p2.y-p1.y };
+		var v23 = { x:p3.x-p2.x, y:p3.y-p2.y };
+		var n12 = v12.x==0?{ x:v12.y, y:0 } : { x:v12.y/v12.x, y:-1 };
+		var n23 = v23.x==0?{ x:v23.y, y:0 } : { x:v23.y/v23.x, y:-1 };
+		
+		var mid = calcIntersectionPoint( m12, n12, m23, n23 );
+		var rad = Math.sqrt( (mid.x-p1.x)*(mid.x-p1.x)+(mid.y-p1.y)*(mid.y-p1.y) );
+		return {middle:mid, radius:rad};
+	}
+	
+	function delaunayTriangulation( points ){
+		var triangles = [];
+		for ( var i=0; i<points.length; i++ ) {
+			for ( var j=i+1; j<points.length; j++ ) {
+				for ( var k=j+1; k<points.length; k++ ) {
+					var circle = circumscribedCircle(points[i],points[j],points[k]);
+					var radSq = circle.radius*circle.radius;
+					var valid = true;
+					for ( var l=0; l<points.length && valid; l++) {
+						if ( l!=i && l!=j && l!=k &&
+							 (circle.middle.x-points[l].x)*(circle.middle.x-points[l].x)
+						+(circle.middle.y-points[l].y)*(circle.middle.y-points[l].y) <= radSq ) {
+							valid=false ;
+						}
+					}
+					if ( valid ) {
+						triangles.push( [i,j,k] );
+					}
+				}
+			}
+		}
+		return triangles;
+	} 
+	
+	function addRandPoint( arr, width, height, minDist ) {
+		var minDistSq = minDist?minDist*minDist:0;
+		var x, y, tooClose;
+		do {
+			x = Math.random()*width;
+			y = Math.random()*height;
+			tooClose=false;
+			for ( var i=0; i<arr.length; i++){
+				var p = arr[i];
+				if ( (p.x-x)*(p.x-x) + (p.y-y)*(p.y-y) < minDistSq ){
+					tooClose=true;
+					break;
+				}
+			}
+		} while( tooClose );
+		arr.push( {x:x,y:y} );
+	}
+	
+	var canvas = document.getElementById("canvas");
+	var ctx = canvas.getContext('2d');
+	var points = [
+	//{x:0,y:50},{x:0,y:0},{x:50,y:0}
+	];
+	for( var i=0; i<20; i++) {
+		addRandPoint( points, canvas.width, canvas.height, 30 );
+	}
+	
+
+	var triangles = delaunayTriangulation(points);
+	
+	//Verbindungslinien
+	ctx.strokeStyle = "#000000";
+	for ( var i=0; i<triangles.length; i++){
+		var t = triangles[i];
+		ctx.beginPath();
+		ctx.moveTo( points[t[0]].x, points[t[0]].y );
+		ctx.lineTo( points[t[1]].x, points[t[1]].y );
+		ctx.lineTo( points[t[2]].x, points[t[2]].y );
+		ctx.lineTo( points[t[0]].x, points[t[0]].y );		
+		ctx.stroke();
+	}
+	
+	// rote Punkte
+	ctx.fillStyle = "#FF0000";
+	for ( var i=0; i<points.length; i++){
+		var p = points[i];
+		ctx.beginPath();
+		ctx.arc(p.x,p.y,5,0,2*Math.PI);
+		ctx.fill();
+	}
+	</script>
+</body>
+</html>

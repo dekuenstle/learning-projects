@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <style>
+        canvas {
+            padding-left: 0;
+            padding-right: 0;
+            margin-left: auto;
+            margin-right: auto;
+            display: block;
+            background-color: black;
+        }
+    </style>
+    <script src="sinuswave.js" ></script>
+    <script src="waverenderer.js" ></script>
+    <script src="emittedwave.js" ></script>
+
+</head>
+<body>
+<canvas width="640" height="480" id="mycanvas"></canvas>
+<script>
+        var canvas = document.getElementById("mycanvas")
+        var sinwave = new SinusWave(100, 2, 0)
+        var wave = new EmitableWave( sinwave )
+        wave.start(0)
+        wave.stop( 0 + 20 )
+        var renderer = new WaveRenderer(canvas, wave)
+        renderer.start()
+</script>
+</body>
+</html>
